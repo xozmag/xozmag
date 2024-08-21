@@ -3,11 +3,6 @@ package constants
 import "time"
 
 const (
-	PGForeignKeyViolationCode = "23503"
-	PGUniqueKeyViolationCode  = "23505"
-)
-
-const (
 	TestMode  = "test"
 	DebugMode = "debug"
 
@@ -28,6 +23,8 @@ const (
 	MiddlewareRolesPath = "configs/models.csv"
 
 	FirebaseReturnURL = "https://firebasestorage.googleapis.com/v0/b/phleybo.appspot.com/o/"
+
+	Success = "success"
 )
 
 const (

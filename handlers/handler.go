@@ -9,6 +9,7 @@ import (
 	e "delivery/pkg/errors"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 
 	httppkg "delivery/pkg/http"
 )
@@ -17,18 +18,20 @@ type Handler struct {
 	cfg             *configs.Configuration
 	log             logger.LoggerI
 	adminController adminController.AdminController
+	redis           *redis.Client
 }
 
-// New creates a new Handler
 func New(
 	cfg *configs.Configuration,
 	log logger.LoggerI,
 	adminController adminController.AdminController,
+	redis *redis.Client,
 ) Handler {
 	return Handler{
 		cfg:             cfg,
 		log:             log,
 		adminController: adminController,
+		redis:           redis,
 	}
 }
 

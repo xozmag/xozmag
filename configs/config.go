@@ -39,6 +39,9 @@ type Configuration struct {
 	PostgresUser     string
 	PostgresPassword string
 
+	RedisAddr     string
+	RedisPassword string
+
 	CasbinConfigPath           string
 	MiddlewareRolesPath        string
 	AccessTokenDuration        time.Duration
@@ -57,8 +60,6 @@ type Configuration struct {
 
 	JWTSecretKey string
 
-	// CodeToIgnore  string //used for testing purpose
-	// PhoneToIgnore string	//used for testing purpose
 }
 
 func load() *Configuration {
@@ -93,6 +94,8 @@ func load() *Configuration {
 	config.PostgresPassword = v.GetString("POSTGRES_PASSWORD")
 	config.PostgresHost = v.GetString("POSTGRES_HOST")
 	config.PostgresPort = v.GetInt("POSTGRES_PORT")
+	config.RedisAddr = v.GetString("REDIS_ADDR")
+	config.RedisPassword = v.GetString("REDIS_PASSWORD")
 
 	// config.CasbinConfigPath = v.GetString("CASBIN_CONFIG_PATH")
 	// config.MiddlewareRolesPath = v.GetString("MIDDLEWARE_ROLES_PATH")

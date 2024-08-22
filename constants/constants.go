@@ -12,7 +12,7 @@ const (
 
 	CustomerRoleInSignup = "customer_in_signup"
 	CustomerRole         = "customer"
-	AdminRole            = "admin"
+	UserRole            = "user"
 
 	UzLang = "uz"
 	RuLang = "ru"

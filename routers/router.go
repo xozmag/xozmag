@@ -34,14 +34,7 @@ func (r Router) Start() {
 	r.router.Use(gin.Recovery())
 	r.router.Use(middlewares.CustomCORSMiddleware())
 
-	// casbinJWTRoleAuthorizer, err := middlewares.NewCasbinJWTRoleAuthorizer(r.config, r.logger)
-	// if err != nil {
-	// 	r.logger.Fatal("Could not initialize Cabin JWT Role Authorizer", zap.Error(err))
-	// }
-	// r.router.Use(casbinJWTRoleAuthorizer.Middleware())
-
 	r.AdminRouters()
-	// r.UserRouters()
 
 	r.logger.Info("HTTP: Server being started...", logger.String("port", r.config.HTTPPort))
 

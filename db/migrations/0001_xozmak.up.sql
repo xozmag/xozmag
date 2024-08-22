@@ -8,3 +8,8 @@ create table xozmaks(
     location json,
     rate integer
 );
+
+CREATE TABLE auth_admin (
+    id UUID PRIMARY KEY,
+    phone_number varchar(13) UNIQUE NOT NULL
+);

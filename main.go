@@ -10,6 +10,7 @@ import (
 	"delivery/storage"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 
 func main() {
@@ -33,14 +34,21 @@ func main() {
 	//storage init
 	strg := storage.New(cfg)
 
+	redisClient := redis.NewClient(&redis.Options{
+        Addr: configs.Config().RedisAddr,
+        Password: configs.Config().RedisPassword, // parol kerak bo'lsa
+        DB: 0, // Redis DB nomeri, default 0
+    })
+
 	//controllers init
-	admincontroller := admincontroller.NewAdminController(log, strg)
+	admincontroller := admincontroller.NewAdminController(log, strg, redisClient)
 
 	//handlers init
 	h := handlers.New(
 		cfg,
 		log,
 		admincontroller,
+		redisClient,
 	)
 
 	//routers

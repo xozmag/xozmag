@@ -6,13 +6,13 @@ const (
 	TestMode  = "test"
 	DebugMode = "debug"
 
-	JWTRefreshTokenExpireDuration = time.Hour * 24
-	JWTAccessTokenExpireDuration  = time.Minute * 30
+	JWTRefreshTokenExpireDuration = time.Hour * 72
+	JWTAccessTokenExpireDuration  = time.Minute * 60
 	ContextTimeoutDuration        = time.Second * 7
 
 	CustomerRoleInSignup = "customer_in_signup"
 	CustomerRole         = "customer"
-	AdminRole            = "admin"
+	UserRole            = "user"
 
 	UzLang = "uz"
 	RuLang = "ru"

@@ -6,6 +6,8 @@ import (
 	admincontroller "delivery/controllers/admin"
 	"delivery/handlers"
 	"delivery/logger"
+	"delivery/middlewares"
+	pkgutil "delivery/pkg/utils"
 	"delivery/routers"
 	"delivery/storage"
 
@@ -33,18 +35,21 @@ func main() {
 	//storage init
 	strg := storage.New(cfg)
 
+	redisClient := pkgutil.NewRedisClient(*cfg)
+
 	//controllers init
-	admincontroller := admincontroller.NewAdminController(log, strg)
+	admincontroller := admincontroller.NewAdminController(log, strg, redisClient)
 
 	//handlers init
 	h := handlers.New(
 		cfg,
 		log,
 		admincontroller,
+		redisClient,
 	)
 
 	//routers
-	router := routers.New(h, cfg, log)
+	router := routers.New(h, cfg, log, &middlewares.JWTRoleAuthorizer{})
 
 	router.Start()
 

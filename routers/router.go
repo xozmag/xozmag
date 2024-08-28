@@ -14,10 +14,11 @@ type Router struct {
 	config  *configs.Configuration
 	router  *gin.Engine
 	logger  logger.LoggerI
+	middlewares *middlewares.JWTRoleAuthorizer
 }
 
 // New creates a new router
-func New(h handlers.Handler, cfg *configs.Configuration, logger logger.LoggerI) Router {
+func New(h handlers.Handler, cfg *configs.Configuration, logger logger.LoggerI, mw *middlewares.JWTRoleAuthorizer) Router {
 	r := gin.New()
 
 	return Router{
@@ -25,7 +26,9 @@ func New(h handlers.Handler, cfg *configs.Configuration, logger logger.LoggerI) 
 		router:  r,
 		logger:  logger,
 		config:  cfg,
+		middlewares: mw,
 	}
+
 }
 
 func (r Router) Start() {
@@ -34,14 +37,8 @@ func (r Router) Start() {
 	r.router.Use(gin.Recovery())
 	r.router.Use(middlewares.CustomCORSMiddleware())
 
-	// casbinJWTRoleAuthorizer, err := middlewares.NewCasbinJWTRoleAuthorizer(r.config, r.logger)
-	// if err != nil {
-	// 	r.logger.Fatal("Could not initialize Cabin JWT Role Authorizer", zap.Error(err))
-	// }
-	// r.router.Use(casbinJWTRoleAuthorizer.Middleware())
-
+	r.UserRouters()
 	r.AdminRouters()
-	// r.UserRouters()
 
 	r.logger.Info("HTTP: Server being started...", logger.String("port", r.config.HTTPPort))
 

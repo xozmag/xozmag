@@ -80,3 +80,26 @@ func GenerateNewJWTToken(tokenMetadata map[string]string, tokenExpireTime time.D
 
 	return t, nil
 }
+
+func ParseToken(tokenString string, signingKey []byte) (string, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
+		return signingKey, nil
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		userID, ok := claims["userID"].(string)
+		if !ok {
+			return "", errors.New("userID not found in token")
+		}
+		return userID, nil
+	}
+
+	return "", errors.New("invalid token")
+}

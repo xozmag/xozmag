@@ -9,7 +9,18 @@ create table xozmaks(
     rate integer
 );
 
-CREATE TABLE auth_admin (
-    id UUID PRIMARY KEY,
-    phone_number varchar(13) UNIQUE NOT NULL
+CREATE TYPE gender AS ENUM ('erkak', 'ayol');
+
+CREATE TABLE users (
+    id UUID not null primary key,
+    phone_number varchar(13) UNIQUE NOT NULL,
+    firstname varchar,
+    surname varchar,
+    fathersname varchar, 
+    birthdate DATE,
+    gender gender,
+    created_by uuid,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by uuid,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/rand"
+	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -58,4 +60,14 @@ func PaginationNull(c *gin.Context) (limit int, page int, err error) {
 	}
 
 	return limit, page, nil
+}
+
+func GenerateVerificationCode() (string, error) {
+	b := make([]byte, 3)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	code := fmt.Sprintf("%06d", b[0]%(10*6))
+	return code, nil
 }

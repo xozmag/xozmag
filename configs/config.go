@@ -59,7 +59,6 @@ type Configuration struct {
 	// context timeout in seconds
 
 	JWTSecretKey string
-
 }
 
 func load() *Configuration {

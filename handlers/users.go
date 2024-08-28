@@ -2,16 +2,49 @@ package handlers
 
 import (
 	"context"
-	"crypto/rand"
 	"delivery/constants"
 	"delivery/entities"
 	"delivery/logger"
 	htp "delivery/pkg/http"
+	jwta "delivery/pkg/jwt"
+	"delivery/pkg/utils"
 	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+func (u *Handler) UpdateProfile(c *gin.Context) {
+	var req entities.UpdateProfile
+	if err := c.ShouldBindJSON(&req); err != nil {
+		u.handleResponse(c, htp.BadRequest, err.Error())
+		return
+	}
+
+	userID, err := jwta.ExtractFromClaims("id", c.GetHeader("Auth"), []byte(u.cfg.JWTSecretKey))
+	if err != nil {
+		u.handleResponse(c, StatusFromError(err), err.Error())
+		return
+	}
+	fmt.Println(userID, "//////////////")
+
+	userIDStr, ok := userID.(string)
+	if !ok {
+		u.handleResponse(c, htp.InternalServerError, "Invalid user ID type")
+		return
+	}
+	fmt.Println(userIDStr, "////////////////")
+
+	req.UpdatedBy = userIDStr
+	req.UpdatedAt = time.Now()
+
+	if err := u.adminController.UpdateUserProfile(c.Request.Context(), userIDStr, req); err != nil {
+		u.handleResponse(c, htp.InternalServerError, err.Error())
+		return
+	}
+
+	u.handleResponse(c, htp.OK, "Profile updated successfully!")
+}
 
 func (h *Handler) Login(c *gin.Context) {
 	loginReq := entities.LoginReq{}
@@ -42,8 +75,8 @@ func (h *Handler) Login(c *gin.Context) {
 	h.handleResponse(c, htp.OK, resp)
 }
 
-func (h *Handler) SignUp(c *gin.Context) {
-	req := entities.SendCodeReq{}
+func (h *Handler) SendCode(c *gin.Context) {
+	var req entities.SendCodeReq
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		h.handleResponse(c, htp.BadRequest, err.Error())
@@ -59,26 +92,21 @@ func (h *Handler) SignUp(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), constants.ContextTimeoutDuration)
 	defer cancel()
 
-	code, err := generateVerificationCode()
+	smscode, err := utils.GenerateVerificationCode()
 	if err != nil {
 		h.log.Error("kod generatsiya qilishda xatolik", logger.Error(err))
-		//return pkgerrors.NewError(http.StatusInternalServerError, "kod generatsiya qilishda xatolik")
 	}
 
-	redisKey := fmt.Sprintf("verification_code:%s", req.PhoneNumber)
-	fmt.Println(redisKey)
-
-	err = h.redis.Set(ctx, redisKey, code, 2*time.Minute).Err() // Kodni 2 minutga saqlaymiz
+	err = h.redis.Set(ctx, req.PhoneNumber, smscode, 20*time.Minute).Err()
 	if err != nil {
 		h.log.Error("Redisda kodni saqlashda xatolik1", logger.Error(err))
-		//return pkgerrors.NewError(http.StatusInternalServerError, "Redisda kodni saqlashda xatolik2")
 	}
 
 	h.handleResponse(c, htp.Created, "")
 }
 
-func (h *Handler) VerifyCode(c *gin.Context) {
-	req := entities.VerifyCodeReq{}
+func (h *Handler) SignUp(c *gin.Context) {
+	var req entities.VerifyCodeReq
 	err := c.ShouldBindJSON(&req)
 
 	if err != nil {
@@ -95,7 +123,7 @@ func (h *Handler) VerifyCode(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), constants.ContextTimeoutDuration)
 	defer cancel()
 
-	isValid, err := h.adminController.VerifyCode(ctx, req)
+	isValid, err := h.adminController.SignUp(ctx, req)
 	if err != nil {
 		h.handleResponse(c, StatusFromError(err), err.Error())
 		return
@@ -107,14 +135,4 @@ func (h *Handler) VerifyCode(c *gin.Context) {
 	}
 
 	h.handleResponse(c, htp.OK, "Code verified, you registered successfully!")
-}
-
-func generateVerificationCode() (string, error) {
-	b := make([]byte, 3)
-	_, err := rand.Read(b)
-	if err != nil {
-		return "", err
-	}
-	code := fmt.Sprintf("%06d", b[0]%(10*6))
-	return code, nil
 }

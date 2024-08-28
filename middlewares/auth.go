@@ -15,7 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// JWTRoleAuthorizer is a sturcture for a Role Authorizer type
+// JWTRoleAuthorizer is a structure for a Role Authorizer type
 type JWTRoleAuthorizer struct {
 	enforcer interface {
 		Enforce(rvals ...interface{}) (bool, error)
@@ -24,9 +24,8 @@ type JWTRoleAuthorizer struct {
 	logger     logger.LoggerI
 }
 
-// NewCasbinJWTRoleAuthorizer creates and returns new Role Authorizer
+// NewCasbinJWTRoleAuthorizer creates and returns a new Role Authorizer
 func NewCasbinJWTRoleAuthorizer(cfg *configs.Configuration, logger logger.LoggerI) (*JWTRoleAuthorizer, error) {
-
 	enforcer, err := casbin.NewEnforcer(cfg.CasbinConfigPath, cfg.MiddlewareRolesPath)
 	if err != nil {
 		logger.Fatal("could not initialize new enforcer", zap.Any("error", err))
@@ -40,30 +39,25 @@ func NewCasbinJWTRoleAuthorizer(cfg *configs.Configuration, logger logger.Logger
 	}, nil
 }
 
-// Middleware ...
+// Middleware checks the permission using Casbin
 func (jwta *JWTRoleAuthorizer) Middleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Check Permission with casbin
 		allowed, err := jwta.checkPermission(c.Request)
 		if err != nil {
-			// Casbin.Enforcer not working normal
 			jwta.logger.Error("Error checking permission", logger.Error(err))
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 		if !allowed {
-			// Write an error and stop the handler chain
 			jwta.logger.Info("Error checking permission: not allowed")
 			c.AbortWithError(http.StatusForbidden, errors.New("permission denied"))
 			return
 		}
-		// Pass down the request to the next middleware (or final handler)
 		c.Next()
 	}
 }
 
 func (jwta *JWTRoleAuthorizer) checkPermission(r *http.Request) (bool, error) {
-
 	role, err := jwta.getRole(r.Header.Get("Authorization"))
 	if err != nil {
 		return false, err
@@ -71,12 +65,11 @@ func (jwta *JWTRoleAuthorizer) checkPermission(r *http.Request) (bool, error) {
 
 	method := r.Method
 	path := r.URL.Path
-	enforsed, err := jwta.enforcer.Enforce(role, path, method)
-	return enforsed, err
+	enforced, err := jwta.enforcer.Enforce(role, path, method)
+	return enforced, err
 }
 
 func (jwta *JWTRoleAuthorizer) getRole(accessToken string) (string, error) {
-
 	role, err := jwt.ExtractFromClaims("role", accessToken, jwta.signingKey)
 	if err != nil {
 		log.Println("could not extract claims:", err)
@@ -89,3 +82,5 @@ func (jwta *JWTRoleAuthorizer) getRole(accessToken string) (string, error) {
 
 	return role.(string), nil
 }
+
+// AuthMiddleware extracts the userID from the JWT token and sets it in the context

@@ -37,8 +37,8 @@ func (a adminRepo) CreateXozmak(ctx context.Context, req entities.Xozmak) error 
 	return nil
 }
 
-func (a adminRepo) Signup(ctx context.Context, req entities.SignupReq) error {
-	res := a.db.WithContext(ctx).Table("auth_admin").Create(req)
+func (a adminRepo) Signup(ctx context.Context, req entities.VerifyCodeReq) error {
+	res := a.db.WithContext(ctx).Table("users").Create(req)
 	if res.Error != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(res.Error, &pgErr) && pgErr.Code == constants.PGUniqueKeyViolationCode {
@@ -53,7 +53,7 @@ func (a adminRepo) Signup(ctx context.Context, req entities.SignupReq) error {
 func (a adminRepo) GetUserByPhone(ctx context.Context, phoneNumber string) (entities.LoginPostgres, error) {
 	user := entities.LoginPostgres{}
 
-	res := a.db.WithContext(ctx).Table("auth_admin").Where("phone_number = ?", phoneNumber).First(&user)
+	res := a.db.WithContext(ctx).Table("users").Where("phone_number = ?", phoneNumber).First(&user)
 
 	if res.Error != nil {
 		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
@@ -67,4 +67,13 @@ func (a adminRepo) GetUserByPhone(ctx context.Context, phoneNumber string) (enti
 	}
 
 	return user, nil
+}
+
+func (a *adminRepo) UpdateUser(ctx context.Context, userID string, updateData map[string]interface{}) error {
+    // Update profile data for the user with the given userID
+    if err := a.db.WithContext(ctx).Table("users").Where("id = ?", userID).Updates(updateData).Error; err != nil {
+        return fmt.Errorf("failed to update profile data: %w", err)
+    }
+
+    return nil
 }

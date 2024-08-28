@@ -6,11 +6,12 @@ import (
 	admincontroller "delivery/controllers/admin"
 	"delivery/handlers"
 	"delivery/logger"
+	"delivery/middlewares"
+	pkgutil "delivery/pkg/utils"
 	"delivery/routers"
 	"delivery/storage"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 )
 
 func main() {
@@ -34,11 +35,7 @@ func main() {
 	//storage init
 	strg := storage.New(cfg)
 
-	redisClient := redis.NewClient(&redis.Options{
-        Addr: configs.Config().RedisAddr,
-        Password: configs.Config().RedisPassword, // parol kerak bo'lsa
-        DB: 0, // Redis DB nomeri, default 0
-    })
+	redisClient := pkgutil.NewRedisClient(*cfg)
 
 	//controllers init
 	admincontroller := admincontroller.NewAdminController(log, strg, redisClient)
@@ -52,7 +49,7 @@ func main() {
 	)
 
 	//routers
-	router := routers.New(h, cfg, log)
+	router := routers.New(h, cfg, log, &middlewares.JWTRoleAuthorizer{})
 
 	router.Start()
 

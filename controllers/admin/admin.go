@@ -21,8 +21,9 @@ import (
 
 type AdminController interface {
 	Login(ctx context.Context, req entities.LoginReq) (entities.LoginRes, error)
-	VerifyCode(ctx context.Context, req entities.VerifyCodeReq) (bool, error)
+	SignUp(ctx context.Context, req entities.VerifyCodeReq) (bool, error)
 	CreateXozmak(ctx context.Context, req entities.Xozmak) error
+	UpdateUserProfile(ctx context.Context, userID string, req entities.UpdateProfile) error
 }
 
 type adminController struct {
@@ -41,6 +42,30 @@ func NewAdminController(log logger.LoggerI, storage storage.Storage, redis *redi
 	}
 }
 
+func (a adminController) UpdateUserProfile(ctx context.Context, userID string, req entities.UpdateProfile) error {
+	updateData := map[string]interface{}{}
+
+	if req.Firstname != nil {
+		updateData["firstname"] = *req.Firstname
+	}
+	if req.Surname != nil {
+		updateData["surname"] = *req.Surname
+	}
+	if req.Fathersname != nil {
+		updateData["fathersname"] = *req.Fathersname
+	}
+	if req.Birthdate != nil {
+		updateData["birthdate"] = *req.Birthdate
+	}
+	if req.Gender != nil {
+		updateData["gender"] = *req.Gender
+	}
+	updateData["updated_by"] = req.UpdatedBy
+	updateData["updated_at"] = req.UpdatedAt
+
+	return a.storage.Admin().UpdateUser(ctx, userID, updateData)
+}
+
 func (a adminController) Login(ctx context.Context, req entities.LoginReq) (entities.LoginRes, error) {
 
 	admin, err := a.storage.Admin().GetUserByPhone(ctx, req.PhoneNumber)
@@ -55,7 +80,6 @@ func (a adminController) Login(ctx context.Context, req entities.LoginReq) (enti
 
 	tokenMetadata := map[string]string{
 		"id":          admin.Id,
-		"phoneNumber": admin.PhoneNumber,
 		"role":        constants.UserRole,
 	}
 
@@ -78,11 +102,8 @@ func (a adminController) Login(ctx context.Context, req entities.LoginReq) (enti
 	}, nil
 }
 
-func (a adminController) VerifyCode(ctx context.Context, req entities.VerifyCodeReq) (bool, error) {
-	// Redisdan saqlangan kodni olish
-	redisKey := fmt.Sprintf("verification_code:%s", req.PhoneNumber)
-	fmt.Println(redisKey)
-	storedCode, err := a.redis.Get(ctx, redisKey).Result()
+func (a adminController) SignUp(ctx context.Context, req entities.VerifyCodeReq) (bool, error) {
+	storedCode, err := a.redis.Get(ctx, req.PhoneNumber).Result()
 	if err == redis.Nil {
 		return false, pkgerrors.NewError(http.StatusBadRequest, "Code is invalid or expired")
 	} else if err != nil {
@@ -95,7 +116,7 @@ func (a adminController) VerifyCode(ctx context.Context, req entities.VerifyCode
 		return false, pkgerrors.NewError(http.StatusBadRequest, "Kod noto'g'ri")
 	}
 
-	err = a.storage.Admin().Signup(ctx, entities.SignupReq{
+	err = a.storage.Admin().Signup(ctx, entities.VerifyCodeReq{
 		ID:          uuid.NewString(),
 		PhoneNumber: req.PhoneNumber,
 	})
@@ -120,3 +141,4 @@ func (a adminController) CreateXozmak(ctx context.Context, req entities.Xozmak) 
 
 	return nil
 }
+

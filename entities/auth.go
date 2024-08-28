@@ -1,8 +1,9 @@
 package entities
 
 import (
-	"errors"
 	"delivery/pkg/utils"
+	"errors"
+	"time"
 )
 
 type LoginReq struct {
@@ -19,18 +20,6 @@ func (req *LoginReq) Validate() error {
 type LoginRes struct {
 	ID     string `json:"id"`
 	Tokens Tokens `json:"tokens"`
-}
-
-type SignupReq struct {
-	ID          string `json:"id"`
-	PhoneNumber string `json:"phone" validate:"required,phone"`
-}
-
-func (req *SignupReq) Validate() error {
-	if !utils.IsPhoneValid(req.PhoneNumber) {
-		return errors.New("invalid phone number")
-	}
-	return nil
 }
 
 type SignupRes struct {
@@ -55,9 +44,11 @@ func (req *SendCodeReq) Validate() error {
 }
 
 type VerifyCodeReq struct {
-	PhoneNumber string `json:"phone" validate:"required,phone"`
-	Code        string `json:"code" validate:"required,len=6"`
+	ID          string `json:"id" gorm:"type:uuid;primary_key;"`
+	PhoneNumber string `json:"phone" validate:"required,phone" gorm:"type:varchar(13);not null;unique;"`
+	Code        string `json:"code" validate:"required,len=6" gorm:"-"`
 }
+
 
 func (req *VerifyCodeReq) Validate() error {
 	if !utils.IsPhoneValid(req.PhoneNumber) {
@@ -76,4 +67,16 @@ type VerifyCodeRes struct {
 type LoginPostgres struct {
 	Id          string `gorm:"primaryKey;column:id"`
 	PhoneNumber string `gorm:"column:phone_number"`
+}
+
+type UpdateProfile struct {
+	Firstname   *string    `json:"firstname" gorm:"column:firstname"`
+	Surname     *string    `json:"surname" gorm:"column:surname"`
+	Fathersname *string    `json:"fathersname" gorm:"column:fathersname"`
+	Birthdate   *time.Time `json:"birthdate" gorm:"column:birthdate"`
+	Gender      *string    `json:"gender" gorm:"column:gender"`
+	CreatedBy   string    `json:"created_by" gorm:"column:created_by"`
+	UpdatedBy   string    `json:"updated_by" gorm:"column:updated_by"`
+	UpdatedAt   time.Time    `json:"updated_at" gorm:"column:updated_at"`
+	CreatedAt   time.Time    `json:"created_at" gorm:"column:created_at"`
 }

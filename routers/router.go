@@ -14,10 +14,11 @@ type Router struct {
 	config  *configs.Configuration
 	router  *gin.Engine
 	logger  logger.LoggerI
+	middlewares *middlewares.JWTRoleAuthorizer
 }
 
 // New creates a new router
-func New(h handlers.Handler, cfg *configs.Configuration, logger logger.LoggerI) Router {
+func New(h handlers.Handler, cfg *configs.Configuration, logger logger.LoggerI, mw *middlewares.JWTRoleAuthorizer) Router {
 	r := gin.New()
 
 	return Router{
@@ -25,7 +26,9 @@ func New(h handlers.Handler, cfg *configs.Configuration, logger logger.LoggerI) 
 		router:  r,
 		logger:  logger,
 		config:  cfg,
+		middlewares: mw,
 	}
+
 }
 
 func (r Router) Start() {
@@ -34,6 +37,7 @@ func (r Router) Start() {
 	r.router.Use(gin.Recovery())
 	r.router.Use(middlewares.CustomCORSMiddleware())
 
+	r.UserRouters()
 	r.AdminRouters()
 
 	r.logger.Info("HTTP: Server being started...", logger.String("port", r.config.HTTPPort))

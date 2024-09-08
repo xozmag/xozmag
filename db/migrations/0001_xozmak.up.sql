@@ -4,6 +4,7 @@ create table xozmaks(
     created_by uuid, 
     updated_at timestamp default current_timestamp,
     updated_by uuid,
+    state numeric(2) not null default 1,
     name varchar not null,
     location json,
     rate integer

@@ -25,6 +25,8 @@ const (
 	FirebaseReturnURL = "https://firebasestorage.googleapis.com/v0/b/phleybo.appspot.com/o/"
 
 	Success = "success"
+	InternelServError = "Sizni so'rovingizni bajarishda kutilmagan xatolik, Iltimos keyinroq urunib ko'ring"
+	BadRequest = "Yuborgan so'rovingizda xatolik"
 )
 
 const (

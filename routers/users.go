@@ -3,10 +3,11 @@ package routers
 func(r Router) UserRouters() {
 	authGroup := r.router.Group("/api/auth")
 	authGroup.POST("/sendcode", r.handler.SendCode)
-	authGroup.POST("/login", r.handler.Login)
-	authGroup.POST("/registr", r.handler.SignUp)
+	authGroup.POST("/registr", r.handler.Registration)
 	
-	authGroup.PUT("/users", r.handler.UpdateProfile)
-	
+	authGroup.PUT("/profile", r.handler.UpdateProfile)
+	authGroup.GET("/profile", r.handler.GetProfile)
+	authGroup.POST("/location", r.handler.InsertUserLocation)
+	authGroup.GET("/location", r.handler.GetUserLocation)
 
 }

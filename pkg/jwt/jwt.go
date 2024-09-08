@@ -8,6 +8,7 @@ import (
 	"time"
 
 	jwtgo "github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 )
 
@@ -54,6 +55,26 @@ func ExtractFromClaims(key, accessToken string, signingKey []byte) (interface{},
 	return claims[key], nil
 
 }
+
+func ExtractUserIDFromToken(c *gin.Context, secretKey []byte) (string, error) {
+	token := c.GetHeader("Authorization")
+	if token == "" {
+		return "", errors.New("authorization header is missing")
+	}
+	
+	userId, err := ExtractFromClaims("id", token, secretKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to extract user ID from token: %w", err)
+	}
+
+	userIDStr, ok := userId.(string)
+	if !ok {
+		return "", errors.New("invalid user ID type")
+	}
+
+	return userIDStr, nil
+}
+
 
 // GenerateNewJWTToken generates a new JWT token
 func GenerateNewJWTToken(tokenMetadata map[string]string, tokenExpireTime time.Duration, signingKey string) (string, error) {

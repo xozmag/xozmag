@@ -37,8 +37,37 @@ func (a adminRepo) CreateXozmak(ctx context.Context, req entities.Xozmak) error 
 	return nil
 }
 
-func (a adminRepo) Signup(ctx context.Context, req entities.VerifyCodeReq) error {
-	res := a.db.WithContext(ctx).Table("users").Create(req)
+func (a adminRepo) GetXozmak(ctx context.Context) ([]entities.Xozmak, error) {
+    var	xozmak []entities.Xozmak
+	err := a.db.Table("xozmaks").Find(&xozmak).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return []entities.Xozmak{}, errors.New("xozmak not found")
+		}
+		return []entities.Xozmak{}, err
+	}
+	return xozmak, nil
+}
+
+func (a adminRepo) UpdateXozmak(ctx context.Context, req entities.Xozmak) error {
+    
+	if err := a.db.WithContext(ctx).Table("xozmaks").Where("id= ?", req.ID).Updates(req).Error; err != nil {
+		return fmt.Errorf("failed to update xozmak data: %w", err)
+    }
+	
+    return nil
+}
+
+func (a adminRepo) DeleteXozmak(ctx context.Context, id string) error {
+		
+		if err := a.db.WithContext(ctx).Table("xozmaks").Where("id = ?", id).Update("state", 0).Error; err != nil {
+			return fmt.Errorf("failed to delete xozmak", err)
+		}
+	return nil
+}
+	
+func (a adminRepo) Registration(ctx context.Context, req entities.RegistrReq) error {
+	res := a.db.WithContext(ctx).Table("users").Create(&req)
 	if res.Error != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(res.Error, &pgErr) && pgErr.Code == constants.PGUniqueKeyViolationCode {
@@ -46,34 +75,76 @@ func (a adminRepo) Signup(ctx context.Context, req entities.VerifyCodeReq) error
 		}
 		return fmt.Errorf("error in Signup: %w", res.Error)
 	}
-
 	return nil
 }
 
-func (a adminRepo) GetUserByPhone(ctx context.Context, phoneNumber string) (entities.LoginPostgres, error) {
-	user := entities.LoginPostgres{}
-
-	res := a.db.WithContext(ctx).Table("users").Where("phone_number = ?", phoneNumber).First(&user)
-
-	if res.Error != nil {
-		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			return entities.LoginPostgres{}, fmt.Errorf("no any user found with phone number %s", phoneNumber)
-		}
-		return entities.LoginPostgres{}, fmt.Errorf("error in GetUserByPhone: %w", res.Error)
-	}
-
-	if res.RowsAffected == 0 {
-		return entities.LoginPostgres{}, fmt.Errorf("no user found with phone number %s", phoneNumber)
-	}
-
-	return user, nil
-}
-
-func (a *adminRepo) UpdateUser(ctx context.Context, userID string, updateData map[string]interface{}) error {
-    // Update profile data for the user with the given userID
+func (a *adminRepo) UpdateUser(ctx context.Context, userID string, updateData entities.UserProfile) error {
+	
     if err := a.db.WithContext(ctx).Table("users").Where("id = ?", userID).Updates(updateData).Error; err != nil {
-        return fmt.Errorf("failed to update profile data: %w", err)
+		return fmt.Errorf("failed to update profile data: %w", err)
     }
-
+	
     return nil
 }
+
+func (a *adminRepo) InsertUserLocation (ctx context.Context, req entities.UserLocation) error {
+     res := a.db.WithContext(ctx).Table("userslocations").Create(&req)
+	 if res.Error != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(res.Error, &pgErr) && pgErr.Code == constants.PGUniqueKeyViolationCode {
+			return fmt.Errorf("error in InsertUserLocation: %w", constants.ErrXozmakAlreadyExists)
+		}
+		return fmt.Errorf("error in InsertUserLocation: %w", res.Error)
+	}
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("error in InsertUserLocation: %w", constants.ErrRowsAffectedIsZero)
+	}
+	return nil
+}
+
+func (a *adminRepo) GetUserProfile (ctx context.Context, userId string) (entities.UserProfile, error) {
+	var usersData entities.UserProfile
+    err := a.db.Where("id = ?", userId).Table("users").First(&usersData).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return entities.UserProfile{}, errors.New("user not found")
+		}
+		return entities.UserProfile{}, err
+	}
+	return usersData, nil
+}
+
+func (a *adminRepo) GetUserLocation(ctx context.Context, userId string)([]entities.UserLocation, error) {
+	var userLocation []entities.UserLocation
+
+	err := a.db.Where("user_id = ?", userId).Table("userslocations").Find(&userLocation).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return []entities.UserLocation{}, errors.New("user locations not found")
+		}
+		return []entities.UserLocation{}, err
+	}
+	return userLocation, nil
+}
+
+//func(a *adminRepo) GetProfile(ctx context.Context)()
+
+
+// func (a adminRepo) GetUserByPhone(ctx context.Context, phoneNumber string) (entities.LoginPostgres, error) {
+// 	user := entities.LoginPostgres{}
+
+// 	res := a.db.WithContext(ctx).Table("users").Where("phone_number = ?", phoneNumber).First(&user)
+
+// 	if res.Error != nil {
+// 		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+// 			return entities.LoginPostgres{}, fmt.Errorf("no any user found with phone number %s", phoneNumber)
+// 		}
+// 		return entities.LoginPostgres{}, fmt.Errorf("error in GetUserByPhone: %w", res.Error)
+// 	}
+
+// 	if res.RowsAffected == 0 {
+// 		return entities.LoginPostgres{}, fmt.Errorf("no user found with phone number %s", phoneNumber)
+// 	}
+
+// 	return user, nil
+// }

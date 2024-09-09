@@ -48,8 +48,8 @@ type UserProfile struct {
 	ID         string    `json:"id" gorm:"type:uuid;primaryKey"`
 	Firstname  string    `json:"firstname" gorm:"column:firstname"`
 	Surname    string    `json:"surname" gorm:"column:surname"`
-	PhoneNumber string   `json:"phone" gorm:"column:phone_number"`
-	Middlename string    `json:"middlename" gorm:"column:fathersname"`
+	Middlename string    `json:"middlename" gorm:"column:middlename"`
+	PhoneNumber string   `json:"phone_number" gorm:"column:phone_number"`
 	Birthdate  time.Time `json:"birthdate" gorm:"column:birthdate"`
 	Gender     string    `json:"gender" gorm:"column:gender"`
 	CreatedBy  string    `json:"created_by" gorm:"column:created_by"`

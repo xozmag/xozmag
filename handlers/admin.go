@@ -4,6 +4,7 @@ import (
 	"delivery/constants"
 	"delivery/entities"
 	"delivery/pkg/http"
+	"delivery/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -43,7 +44,12 @@ func (h *Handler) UpdateXozmak(c *gin.Context) {
 		h.handleResponse(c, http.BadRequest, constants.BadRequest)
 		return
 	}
-	body.ID =c.Param("id")
+	body.ID = c.Param("id")
+
+	if !utils.IsValidUUID(body.ID) {
+		h.handleResponse(c, http.BadRequest, "Invalid UUID format") 
+		return
+	}
 
 	err = h.adminController.UpdateXozmak(c, body)
 	if err != nil {
@@ -53,7 +59,13 @@ func (h *Handler) UpdateXozmak(c *gin.Context) {
 }
 
 func (h *Handler) DeleteXozmak(c *gin.Context) {
-	id :=c.Param("id")
+	id := c.Param("id")
+
+	if !utils.IsValidUUID(id) {
+		h.handleResponse(c, http.BadRequest, "Invalid UUID format") 
+		return
+	}
+
 	err := h.adminController.DeleteXozmak(c, id)
 	if err != nil {
 		h.handleResponse(c, http.InternalServerError, constants.InternelServError)

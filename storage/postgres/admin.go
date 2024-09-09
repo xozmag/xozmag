@@ -39,7 +39,7 @@ func (a adminRepo) CreateXozmak(ctx context.Context, req entities.Xozmak) error 
 
 func (a adminRepo) GetXozmak(ctx context.Context) ([]entities.Xozmak, error) {
     var	xozmak []entities.Xozmak
-	err := a.db.Table("xozmaks").Find(&xozmak).Error
+	err := a.db.Table("xozmaks").Where("state=?", constants.Active).Find(&xozmak).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return []entities.Xozmak{}, errors.New("xozmak not found")
@@ -50,19 +50,30 @@ func (a adminRepo) GetXozmak(ctx context.Context) ([]entities.Xozmak, error) {
 }
 
 func (a adminRepo) UpdateXozmak(ctx context.Context, req entities.Xozmak) error {
-    
-	if err := a.db.WithContext(ctx).Table("xozmaks").Where("id= ?", req.ID).Updates(req).Error; err != nil {
-		return fmt.Errorf("failed to update xozmak data: %w", err)
-    }
-	
-    return nil
+	result := a.db.WithContext(ctx).Table("xozmaks").Where("id = ?", req.ID).Updates(req)
+
+	if result.Error != nil {
+		return fmt.Errorf("failed to update xozmak data: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("no rows affected, xozmak with ID %v not found or no changes made", req.ID)
+	}
+
+	return nil
 }
 
 func (a adminRepo) DeleteXozmak(ctx context.Context, id string) error {
 		
-		if err := a.db.WithContext(ctx).Table("xozmaks").Where("id = ?", id).Update("state", 0).Error; err != nil {
-			return fmt.Errorf("failed to delete xozmak", err)
+		res := a.db.WithContext(ctx).Table("xozmaks").Where("id = ?", id).Update("state", constants.InActive)
+		if res.Error != nil {
+			return fmt.Errorf("failed to delete xozmak data: %w", res.Error)
 		}
+	
+		if res.RowsAffected == 0 {
+			return fmt.Errorf("no rows affected, xozmak with ID %v not found or no changes made", id)
+		}
+	
 	return nil
 }
 	
@@ -78,17 +89,22 @@ func (a adminRepo) Registration(ctx context.Context, req entities.RegistrReq) er
 	return nil
 }
 
-func (a *adminRepo) UpdateUser(ctx context.Context, userID string, updateData entities.UserProfile) error {
-	
-    if err := a.db.WithContext(ctx).Table("users").Where("id = ?", userID).Updates(updateData).Error; err != nil {
-		return fmt.Errorf("failed to update profile data: %w", err)
-    }
+func (a *adminRepo) UpdateUser(ctx context.Context, userId string, updateData entities.UserProfile) error {
+	 res := a.db.WithContext(ctx).Table("users").Where("id = ?", userId).Updates(updateData) 
+	 if res.Error != nil {
+		return fmt.Errorf("failed to update user data: %w", res.Error)
+	}
+
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("no rows affected, userProfile with id %v not found or no changes made", userId)
+	}
+
 	
     return nil
 }
 
 func (a *adminRepo) InsertUserLocation (ctx context.Context, req entities.UserLocation) error {
-     res := a.db.WithContext(ctx).Table("userslocations").Create(&req)
+     res := a.db.WithContext(ctx).Table("users_locations").Create(&req)
 	 if res.Error != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(res.Error, &pgErr) && pgErr.Code == constants.PGUniqueKeyViolationCode {
@@ -117,7 +133,7 @@ func (a *adminRepo) GetUserProfile (ctx context.Context, userId string) (entitie
 func (a *adminRepo) GetUserLocation(ctx context.Context, userId string)([]entities.UserLocation, error) {
 	var userLocation []entities.UserLocation
 
-	err := a.db.Where("user_id = ?", userId).Table("userslocations").Find(&userLocation).Error
+	err := a.db.Where("user_id = ?", userId).Table("users_locations").Find(&userLocation).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return []entities.UserLocation{}, errors.New("user locations not found")

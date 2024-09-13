@@ -38,6 +38,7 @@ func (h *Handler) SendCode(c *gin.Context) {
 
 	h.handleResponse(c, htp.OK, "Telefon raqamingizga 6 xonali kod yuborildi")
 }
+
 func (h *Handler) Registration(c *gin.Context) {
 	var req entities.RegistrReq
 	err := c.ShouldBindJSON(&req)
@@ -61,6 +62,7 @@ func (h *Handler) Registration(c *gin.Context) {
 
 	h.handleResponse(c, htp.OK, resp)
 }
+
 func (h *Handler) InsertUserLocation(c *gin.Context) {
 	var location entities.UserLocation
 	err := c.ShouldBindJSON(&location)
@@ -80,6 +82,7 @@ func (h *Handler) InsertUserLocation(c *gin.Context) {
 	}
 	h.handleResponse(c, htp.OK, constants.Success)
 }
+
 func (h *Handler) UpdateProfile(c *gin.Context) {
 	var req entities.UserProfile
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -91,14 +94,16 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 		h.handleResponse(c, StatusFromError(err), err.Error())
 		return
 	}
+	req.ID=userId
 	req.UpdatedBy = userId
 	req.UpdatedAt = time.Now()
-	if err := h.adminController.UpdateUserProfile(c.Request.Context(), userId, req); err != nil {
+	if err := h.adminController.UpdateUserProfile(c.Request.Context(), req); err != nil {
 		h.handleResponse(c, htp.InternalServerError, err.Error())
 		return
 	}
 	h.handleResponse(c, htp.OK, "Profile updated successfully!")
 }
+
 func (h *Handler) GetProfile(c *gin.Context) {
 	userId, err := jwta.ExtractUserIDFromToken(c, []byte(h.cfg.JWTSecretKey))
 	if err != nil {
@@ -113,6 +118,7 @@ func (h *Handler) GetProfile(c *gin.Context) {
 	}
 	h.handleResponse(c, htp.OK, data)
 }
+
 func (h *Handler) GetUserLocation(c *gin.Context) {
 	userId, err := jwta.ExtractUserIDFromToken(c, []byte(h.cfg.JWTSecretKey))
 	if err != nil {
@@ -126,6 +132,8 @@ func (h *Handler) GetUserLocation(c *gin.Context) {
 	}
 	h.handleResponse(c, htp.OK, data)
 }
+
+
 
 // func (h *Handler) Login(c *gin.Context) {
 // 	loginReq := entities.LoginReq{}

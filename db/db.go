@@ -54,4 +54,5 @@ func Init(config *configs.Configuration) (*gorm.DB, error) {
 	}
 
 	return db, nil
+	
 }

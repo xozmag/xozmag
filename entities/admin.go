@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 type Xozmak struct {
@@ -18,6 +19,23 @@ type Xozmak struct {
 type Location struct {
 	Lat  float64 `json:"lat"`
 	Long float64 `json:"long"`
+}
+
+type Category struct {
+	ID string `json:"id" gorm:"column:id"`
+	Name string `json:"name" gorm:"column:name"`
+	Photo string `json:"photo" gorm:"column:photo"`
+	CreatedAt  time.Time `json:"created_at" gorm:"column:created_at"`
+	UpdatedAt  time.Time `json:"updated_at" gorm:"column:updated_at"`
+}
+
+type SubCategory struct {
+	ID string `json:"id" gorm:"column:id"`
+	Name string `json:"name" gorm:"column:name"`
+	Photo string `json:"photo" gorm:"column:photo"`
+	CategoryId string `json:"categoryId" gorm:"category_id"`
+	CreatedAt  time.Time `json:"created_at" gorm:"column:created_at"`
+	UpdatedAt  time.Time `json:"updated_at" gorm:"column:updated_at"`
 }
 
 func (l *Location) Scan(value interface{}) error {

@@ -22,13 +22,21 @@ import (
 type AdminController interface {
 	Registration(ctx context.Context, req entities.RegistrReq) (entities.RegistrRes, error)
 	CreateXozmak(ctx context.Context, req entities.Xozmak) error
-	UpdateUserProfile(ctx context.Context, userID string, req entities.UserProfile) error
+	UpdateUserProfile(ctx context.Context, req entities.UserProfile) error
 	InsertUserLocation(ctx context.Context, loc entities.UserLocation) error
 	GetUserProfile(ctx context.Context, id string) (entities.UserProfile, error)
 	GetUserLocation(ctx context.Context, userId string) ([]entities.UserLocation, error)
 	GetXozmak(ctx context.Context)([]entities.Xozmak, error)
 	UpdateXozmak(ctx context.Context, req entities.Xozmak) error
 	DeleteXozmak(ctx context.Context, id string) error
+	CreateCategory(ctx context.Context, req entities.Category) error
+	GetCategory(ctx context.Context)([]entities.Category, error)
+	UpdateCategory(ctx context.Context, req entities.Category) error
+	DeleteCategory(ctx context.Context, category_id string) error
+	CreateSubCategory(ctx context.Context, req entities.SubCategory) error
+	GetSubCategory(ctx context.Context)([]entities.SubCategory, error)
+	UpdateSubCategory(ctx context.Context, req entities.SubCategory) error
+	DeleteSubCategory(ctx context.Context, sub_category_id string) error
 }
 
 type adminController struct {
@@ -47,11 +55,11 @@ func NewAdminController(log logger.LoggerI, storage storage.Storage, redis *redi
 	}
 }
 
-func (a adminController) UpdateUserProfile(ctx context.Context, userID string, req entities.UserProfile) error {
+func (a adminController) UpdateUserProfile(ctx context.Context, req entities.UserProfile) error {
 	a.log.Info("UpdateUserProfile started: ",
-		zap.String("Request: ", fmt.Sprintf("UserId: %s", userID)))
+		zap.String("Request: ", fmt.Sprintf("UserId: %s", req.ID)))
 
-	err := a.storage.Admin().UpdateUser(ctx, userID, req)
+	err := a.storage.Admin().UpdateUserProfile(ctx, req)
 	if err != nil {
 		a.log.Error("error in UpdateUserProfile: ", zap.Error(err))
 		return status.Error(codes.Internal, "internal server error")
@@ -205,6 +213,106 @@ func (a adminController) DeleteXozmak (ctx context.Context, id string) error{
 
 	return nil
 }
+
+func (a adminController) CreateCategory (ctx context.Context, req entities.Category) error {
+	a.log.Info("CreateCategory started: ")
+
+	err := a.storage.Admin().CreateCategory(ctx, req)
+	if err != nil{
+		a.log.Error("error in CreateCategory: ", zap.Error(err))
+		return status.Error(codes.Internal, "internel server error")
+	}
+	a.log.Info("CreateCategory finished")
+
+	return nil
+}
+
+func (a adminController) GetCategory (ctx context.Context)([]entities.Category, error) {
+	a.log.Info("GetCategory started: ")
+
+	data, err := a.storage.Admin().GetCategory(ctx)
+	if err != nil{
+	    a.log.Error("error in CreateCategory: ", zap.Error(err))
+		return []entities.Category{}, status.Error(codes.Internal, "internel server error")
+	}
+	a.log.Info("GetCategory finished")
+	return data, nil
+}
+
+func (a adminController) UpdateCategory(ctx context.Context, req entities.Category) error{
+    a.log.Info("UpdateCategory started: ")
+	err := a.storage.Admin().UpdateCategory(ctx, req)
+	if err != nil{
+		a.log.Error("error in UpdateCategory: ", zap.Error(err))
+		return status.Error(codes.Internal, "internel server error")
+	}
+	a.log.Info("UpdateCategory finished")
+
+	return nil
+}
+
+func (a adminController) DeleteCategory (ctx context.Context, categoryId string) error{
+	a.log.Info("DeleteCategory started: ")
+	err := a.storage.Admin().DeleteCategory(ctx, categoryId)
+	if err != nil{
+		a.log.Error("error in DeleteCategory: ", zap.Error(err))
+		return status.Error(codes.Internal, "internel server error")
+	}
+	a.log.Info("DeleteCategory finished")
+
+	return nil
+}
+
+func (a adminController) CreateSubCategory (ctx context.Context, req entities.SubCategory) error {
+	a.log.Info("CreateSubCategory started: ")
+
+	err := a.storage.Admin().CreateSubCategory(ctx, req)
+	if err != nil{
+		a.log.Error("error in CreateSubCategory: ", zap.Error(err))
+		return status.Error(codes.Internal, "internel server error")
+	}
+	a.log.Info("CreateSubCategory finished")
+
+	return nil
+}
+
+func (a adminController) GetSubCategory (ctx context.Context)([]entities.SubCategory, error) {
+	a.log.Info("GetSubCategory started: ")
+
+	data, err := a.storage.Admin().GetSubCategory(ctx)
+	if err != nil{
+	    a.log.Error("error in GetSubCategory: ", zap.Error(err))
+		return []entities.SubCategory{}, status.Error(codes.Internal, "internel server error")
+	}
+	a.log.Info("GetSubCategory finished")
+	return data, nil
+}
+
+func (a adminController) UpdateSubCategory(ctx context.Context, req entities.SubCategory) error{
+    a.log.Info("UpdateSubCategory started: ")
+	err := a.storage.Admin().UpdateSubCategory(ctx, req)
+	if err != nil{
+		a.log.Error("error in UpdateSubCategory: ", zap.Error(err))
+		return status.Error(codes.Internal, "internel server error")
+	}
+	a.log.Info("UpdateSubCategory finished")
+
+	return nil
+}
+
+func (a adminController) DeleteSubCategory (ctx context.Context, sub_categoryId string) error{
+	a.log.Info("DeleteSubCategory started: ")
+	err := a.storage.Admin().DeleteSubCategory(ctx, sub_categoryId)
+	if err != nil{
+		a.log.Error("error in DeleteSubCategory: ", zap.Error(err))
+		return status.Error(codes.Internal, "internel server error")
+	}
+	a.log.Info("DeleteSubCategory finished")
+
+	return nil
+}
+
+
 
 // func (a adminController) Login(ctx context.Context, req entities.LoginReq) (entities.LoginRes, error) {
 

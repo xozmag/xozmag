@@ -38,7 +38,7 @@ func (a adminRepo) CreateXozmak(ctx context.Context, req entities.Xozmak) error 
 }
 
 func (a adminRepo) GetXozmak(ctx context.Context) ([]entities.Xozmak, error) {
-    var	xozmak []entities.Xozmak
+	var xozmak []entities.Xozmak
 	err := a.db.Table("xozmaks").Where("state=?", constants.Active).Find(&xozmak).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -64,19 +64,19 @@ func (a adminRepo) UpdateXozmak(ctx context.Context, req entities.Xozmak) error 
 }
 
 func (a adminRepo) DeleteXozmak(ctx context.Context, id string) error {
-		
-		res := a.db.WithContext(ctx).Table("xozmaks").Where("id = ?", id).Update("state", constants.InActive)
-		if res.Error != nil {
-			return fmt.Errorf("failed to delete xozmak data: %w", res.Error)
-		}
-	
-		if res.RowsAffected == 0 {
-			return fmt.Errorf("no rows affected, xozmak with ID %v not found or no changes made", id)
-		}
-	
+
+	res := a.db.WithContext(ctx).Table("xozmaks").Where("id = ?", id).Update("state", constants.InActive)
+	if res.Error != nil {
+		return fmt.Errorf("failed to delete xozmak data: %w", res.Error)
+	}
+
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("no rows affected, xozmak with ID %v not found or no changes made", id)
+	}
+
 	return nil
 }
-	
+
 func (a adminRepo) Registration(ctx context.Context, req entities.RegistrReq) error {
 	res := a.db.WithContext(ctx).Table("users").Create(&req)
 	if res.Error != nil {
@@ -89,23 +89,20 @@ func (a adminRepo) Registration(ctx context.Context, req entities.RegistrReq) er
 	return nil
 }
 
-func (a *adminRepo) UpdateUser(ctx context.Context, userId string, updateData entities.UserProfile) error {
-	 res := a.db.WithContext(ctx).Table("users").Where("id = ?", userId).Updates(updateData) 
-	 if res.Error != nil {
+func (a *adminRepo) UpdateUserProfile(ctx context.Context, updateData entities.UserProfile) error {
+	res := a.db.WithContext(ctx).Table("users").Where("id = ?", updateData.ID).Updates(updateData)
+	if res.Error != nil {
 		return fmt.Errorf("failed to update user data: %w", res.Error)
 	}
-
 	if res.RowsAffected == 0 {
-		return fmt.Errorf("no rows affected, userProfile with id %v not found or no changes made", userId)
+		return fmt.Errorf("no rows affected, userProfile with id %v not found or no changes made", updateData.ID)
 	}
-
-	
-    return nil
+	return nil
 }
 
-func (a *adminRepo) InsertUserLocation (ctx context.Context, req entities.UserLocation) error {
-     res := a.db.WithContext(ctx).Table("users_locations").Create(&req)
-	 if res.Error != nil {
+func (a *adminRepo) InsertUserLocation(ctx context.Context, req entities.UserLocation) error {
+	res := a.db.WithContext(ctx).Table("users_locations").Create(&req)
+	if res.Error != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(res.Error, &pgErr) && pgErr.Code == constants.PGUniqueKeyViolationCode {
 			return fmt.Errorf("error in InsertUserLocation: %w", constants.ErrXozmakAlreadyExists)
@@ -118,9 +115,9 @@ func (a *adminRepo) InsertUserLocation (ctx context.Context, req entities.UserLo
 	return nil
 }
 
-func (a *adminRepo) GetUserProfile (ctx context.Context, userId string) (entities.UserProfile, error) {
+func (a *adminRepo) GetUserProfile(ctx context.Context, userId string) (entities.UserProfile, error) {
 	var usersData entities.UserProfile
-    err := a.db.Where("id = ?", userId).Table("users").First(&usersData).Error
+	err := a.db.Where("id = ?", userId).Table("users").First(&usersData).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return entities.UserProfile{}, errors.New("user not found")
@@ -130,7 +127,7 @@ func (a *adminRepo) GetUserProfile (ctx context.Context, userId string) (entitie
 	return usersData, nil
 }
 
-func (a *adminRepo) GetUserLocation(ctx context.Context, userId string)([]entities.UserLocation, error) {
+func (a *adminRepo) GetUserLocation(ctx context.Context, userId string) ([]entities.UserLocation, error) {
 	var userLocation []entities.UserLocation
 
 	err := a.db.Where("user_id = ?", userId).Table("users_locations").Find(&userLocation).Error
@@ -143,8 +140,110 @@ func (a *adminRepo) GetUserLocation(ctx context.Context, userId string)([]entiti
 	return userLocation, nil
 }
 
-//func(a *adminRepo) GetProfile(ctx context.Context)()
+func (a *adminRepo) CreateCategory(ctx context.Context, req entities.Category) error {
+	res := a.db.WithContext(ctx).Table("category").Create(&req)
+	if res.Error != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(res.Error, &pgErr) && pgErr.Code == constants.PGUniqueKeyViolationCode {
+			return fmt.Errorf("error in CreateCategory: %w", constants.ErrXozmakAlreadyExists)
+		}
+		return fmt.Errorf("error in CreateCategory: %w", res.Error)
+	}
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("error in CreateCategory: %w", constants.ErrRowsAffectedIsZero)
+	}
+	return nil
+}
 
+func (a *adminRepo) GetCategory(ctx context.Context) ([]entities.Category, error) {
+	var categoryList []entities.Category
+	err := a.db.Table("category").Where("state=?", constants.Active).Find(&categoryList).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return []entities.Category{}, errors.New("user not found")
+		}
+		return []entities.Category{}, err
+	}
+	return categoryList, nil
+}
+
+func (a *adminRepo) UpdateCategory(ctx context.Context, req entities.Category) error {
+	res := a.db.WithContext(ctx).Table("category").Where("id = ?", req.ID).Updates(req)
+	if res.Error != nil {
+		return fmt.Errorf("failed to update category: %w", res.Error)
+	}
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("no rows affected, category with id %v not found or no changes made", req.ID)
+	}
+	return nil
+}
+
+func (a adminRepo) DeleteCategory(ctx context.Context, categoryId string) error {
+
+	res := a.db.WithContext(ctx).Table("category").Where("id = ?", categoryId).Update("state", constants.InActive)
+	if res.Error != nil {
+		return fmt.Errorf("failed to delete category data: %w", res.Error)
+	}
+
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("no rows affected, category with ID %v not found or no changes made", categoryId)
+	}
+	return nil
+}
+
+func (a *adminRepo) CreateSubCategory(ctx context.Context, req entities.SubCategory) error {
+	res := a.db.WithContext(ctx).Table("sub_category").Create(&req)
+	if res.Error != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(res.Error, &pgErr) && pgErr.Code == constants.PGUniqueKeyViolationCode {
+			return fmt.Errorf("error in CreateSubCategory: %w", constants.ErrXozmakAlreadyExists)
+		}
+		return fmt.Errorf("error in CreateSubCategory: %w", res.Error)
+	}
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("error in CreateSubCategory: %w", constants.ErrRowsAffectedIsZero)
+	}
+	return nil
+}
+
+func (a *adminRepo) GetSubCategory(ctx context.Context) ([]entities.SubCategory, error) {
+	var categoryList []entities.SubCategory
+	err := a.db.Table("sub_category").Where("state=?", constants.Active).Find(&categoryList).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return []entities.SubCategory{}, errors.New("user not found")
+		}
+		return []entities.SubCategory{}, err
+	}
+	return categoryList, nil
+}
+
+func (a *adminRepo) UpdateSubCategory(ctx context.Context, req entities.SubCategory) error {
+	res := a.db.WithContext(ctx).Table("sub_category").Where("id = ?", req.ID).Updates(req)
+	if res.Error != nil {
+		return fmt.Errorf("failed to update subCategory: %w", res.Error)
+	}
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("no rows affected, subCategory with id %v not found or no changes made", req.ID)
+	}
+	return nil
+}
+
+func (a adminRepo) DeleteSubCategory(ctx context.Context, sub_categoryId string) error {
+
+	res := a.db.WithContext(ctx).Table("sub_category").Where("id = ?", sub_categoryId).Update("state", constants.InActive)
+	if res.Error != nil {
+		return fmt.Errorf("failed to delete category data: %w", res.Error)
+	}
+
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("no rows affected, category with ID %v not found or no changes made", sub_categoryId)
+	}
+	return nil
+}
+
+
+//func(a *adminRepo) GetProfile(ctx context.Context)()
 
 // func (a adminRepo) GetUserByPhone(ctx context.Context, phoneNumber string) (entities.LoginPostgres, error) {
 // 	user := entities.LoginPostgres{}

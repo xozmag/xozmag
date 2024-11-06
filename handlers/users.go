@@ -60,7 +60,6 @@ func (h *Handler) Registration(c *gin.Context) {
 		return
 	}
 
-	
 	h.handleResponse(c, htp.OK, resp)
 }
 

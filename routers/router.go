@@ -39,6 +39,7 @@ func (r Router) Start() {
 
 	r.UserRouters()
 	r.AdminRouters()
+	r.UploadRouters()
 
 	r.logger.Info("HTTP: Server being started...", logger.String("port", r.config.HTTPPort))
 

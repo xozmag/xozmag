@@ -9,6 +9,7 @@ import (
 	pkgerrors "delivery/pkg/errors"
 	"delivery/pkg/jwt"
 	"delivery/storage"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -38,6 +39,7 @@ type AdminController interface {
 	UpdateSubCategory(ctx context.Context, req entities.SubCategory) error
 	DeleteSubCategory(ctx context.Context, sub_category_id string) error
 	AddFavorite(ctx context.Context, req entities.Favorite) error
+	CreateProduct(ctx context.Context, req entities.Product) error
 }
 
 type adminController struct {
@@ -319,6 +321,23 @@ func (a adminController) AddFavorite(ctx context.Context, req entities.Favorite)
 
 	return nil
 }
+
+func (a adminController) CreateProduct(ctx context.Context, req entities.Product) error {
+	a.log.Info("CreateProduct started: ", zap.String("Request: ", req.ProductID.String()))
+	err := a.storage.Admin().CreateProduct(ctx, req)
+	if err != nil {
+		if errors.Is(err, constants.ErrProductAlreadyExists) {
+			a.log.Error("Product already exist", zap.Error(err))
+			return status.Error(codes.InvalidArgument, err.Error())
+		}
+		a.log.Error("Failed to create product", zap.Error(err))
+		return status.Error(codes.Internal, err.Error())
+	}
+
+	a.log.Info("CreateProduct finished")
+	return nil
+}
+
 // func (a adminController) Login(ctx context.Context, req entities.LoginReq) (entities.LoginRes, error) {
 
 // 	admin, err := a.storage.Admin().GetUserByPhone(ctx, req.PhoneNumber)

@@ -244,17 +244,65 @@ func (a adminRepo) DeleteSubCategory(ctx context.Context, sub_categoryId string)
 }
 
 func (a adminRepo) AddFavorite(ctx context.Context, req entities.Favorite) error {
-    if err := a.db.Clauses(clause.OnConflict{
-        Columns:   []clause.Column{{Name: "user_id"}, {Name: "product_id"}},
-        DoUpdates: clause.Assignments(map[string]interface{}{
-            "is_favorited": gorm.Expr("NOT favorites.is_favorited"), 
-        }),
-    }).Create(&req).Error; err != nil {
-        return fmt.Errorf("error in Addfavorite upsert: %v", err)
-    }
-    return nil
+	if err := a.db.Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "user_id"}, {Name: "product_id"}},
+		DoUpdates: clause.Assignments(map[string]interface{}{
+			"is_favorited": gorm.Expr("NOT favorites.is_favorited"),
+		}),
+	}).Create(&req).Error; err != nil {
+		return fmt.Errorf("error in Addfavorite upsert: %v", err)
+	}
+	return nil
 }
 
+func (a adminRepo) CreateProduct(ctx context.Context, product entities.Product) error {
+	tx := a.db.WithContext(ctx).Begin()
+
+	if tx.Error != nil {
+		tx.Rollback()
+		return constants.ErrTransaction
+	}
+
+	if err := tx.Table("products").Create(&product); err.Error != nil {
+		tx.Rollback()
+		var pgErr *pgconn.PgError
+		if errors.As(err.Error, &pgErr) && pgErr.Code == constants.PGUniqueKeyViolationCode {
+			return fmt.Errorf("error in CreateProduct: %w", constants.ErrProductAlreadyExists)
+		}else if err.RowsAffected == 0 {
+			return fmt.Errorf("error in CreateProduct: %w", constants.ErrRowsAffectedIsZero)
+		}
+		return fmt.Errorf("error in CreateProduct: %w", err.Error)
+	}
+
+	if err := tx.Table("product_details").Create(&product.ProductDetails); err.Error != nil {
+		tx.Rollback()
+		var pgErr *pgconn.PgError
+		if errors.As(err.Error, &pgErr) && pgErr.Code == constants.PGUniqueKeyViolationCode {
+			return fmt.Errorf("error in CreateProductDetails: %w", constants.ErrProductAlreadyExists)
+		}else if err.RowsAffected == 0 {
+			return fmt.Errorf("error in CreateProductDetails: %w", constants.ErrRowsAffectedIsZero)
+		}
+		return fmt.Errorf("error in CreateProductDetails: %w", err.Error)
+	}
+
+	if err := tx.Table("files").Create(&product.Files); err.Error != nil {
+		tx.Rollback()
+		var pgErr *pgconn.PgError
+		if errors.As(err.Error, &pgErr) && pgErr.Code == constants.PGUniqueKeyViolationCode {
+			return fmt.Errorf("error in CreateProductMedia: %w", constants.ErrProductAlreadyExists)
+		}else if err.RowsAffected == 0 {
+			return fmt.Errorf("error in CreateProductMedia: %w", constants.ErrRowsAffectedIsZero)
+		}
+		return fmt.Errorf("error in CreateProductMedia: %w", err.Error)
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error in transaction commit: %w", err)
+	}
+
+	return nil
+}
 
 //func(a *adminRepo) GetProfile(ctx context.Context)()
 

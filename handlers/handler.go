@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"delivery/configs"
@@ -117,3 +120,62 @@ func StatusFromError(err error) httppkg.Status {
 	}
 
 }
+
+type ValidationError struct {
+	Field   string `json:"field"`
+	Message string `json:"message"`
+}
+
+func handleBodyParseError(err error) []ValidationError {
+	var validationErrors []ValidationError
+
+	var ute *json.UnmarshalTypeError
+	if errors.As(err, &ute) {
+		// line, column := findLineAndColumn(body, ute.Offset)
+		validationErrors = append(validationErrors, ValidationError{
+			Field:   ute.Field,
+			Message: fmt.Sprintf("Type mismatch: expected %s but got %s", ute.Type.String(), ute.Value),
+		})
+	} else if syntaxErr, ok := err.(*json.SyntaxError); ok {
+		validationErrors = append(validationErrors, ValidationError{
+			Field:   "JSON",
+			Message: fmt.Sprintf("Syntax error at offset %d", syntaxErr.Offset),
+		})
+	} else {
+		validationErrors = append(validationErrors, ValidationError{
+			Field:   "Unknown",
+			Message: err.Error(),
+		})
+	}
+
+	return validationErrors
+}
+
+// func calculateLineAndColumn(data []byte, offset int64) (line, col int) {
+// 	// Offset asosida qator va ustun hisoblash
+// 	// data, _ := io.ReadAll(body)
+// 	line, col = 1, 0
+// 	for i, b := range data {
+// 		if int64(i) == offset {
+// 			break
+// 		}
+// 		if b == '\n' {
+// 			line++
+// 			col = 0
+// 		} else {
+// 			col++
+// 		}
+// 	}
+// 	return line, col
+// }
+
+// func findLineAndColumn(jsonBody []byte, offset int64) (line, column int) {
+//     if offset > int64(len(jsonBody)) {
+//         offset = int64(len(jsonBody)) // Out-of-range ni cheklash
+//     }
+
+//     lines := bytes.Split(jsonBody[:offset], []byte("\n"))
+//     line = len(lines)
+//     column = len(lines[len(lines)-1])
+//     return line, column
+// }

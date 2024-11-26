@@ -1,5 +1,7 @@
+create SEQUENCE seq_product_details;
+
 create table product_details(
-    id uuid not null primary key,
+    id bigint not null primary key default nextval('seq_product_details'),
     product_id uuid not null,
     state numeric(2) not null default 1,
     color integer,

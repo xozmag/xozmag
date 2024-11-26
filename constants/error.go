@@ -13,8 +13,14 @@ const (
 	ErrXozmakConstantNotExists = Sentinel("no company constant exists")
 	//ErrXozmakAlreadyExists ...
 	ErrXozmakAlreadyExists = Sentinel("the xozmak already exists")
+	// ErrProductConstantNotExists ...
+	ErrProductConstantNotExists = Sentinel("no product constant exists")
+	//ErrProductAlreadyExists ...
+	ErrProductAlreadyExists = Sentinel("the product already exists")
 	// ErrRowsAffectedIsZero indicates that sql command didn't work
 	ErrRowsAffectedIsZero = Sentinel("no rows affected after sql command")
+	//ErrTransaction ...
+	ErrTransaction = Sentinel("transaction start error")
 )
 
 const (

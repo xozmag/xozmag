@@ -14,6 +14,7 @@ func (r Router) AdminRouters() {
 	adminGroup.GET("/subcategory", r.handler.GetSubCategory)
 	adminGroup.PUT("/subcategory/:id", r.handler.UpdateSubCategory)
 	adminGroup.DELETE("/subcategory/:id", r.handler.DeleteSubCategory)
+	adminGroup.POST("/product", r.handler.CreateProduct)
 
 	adminGroup.POST("/multi-upload", r.handler.MultipleUploadHandler)
 }
